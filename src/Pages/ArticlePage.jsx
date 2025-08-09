@@ -33,7 +33,7 @@ export default function ArticlePage() {
         return
       }
 
-      // Updated API call with correct payload structure
+      
       const response = await axios.post(
         'https://api-inference.huggingface.co/models/deepset/roberta-base-squad2',
         {

@@ -8,6 +8,7 @@ import TopicSelector from './components/TopicSelector.jsx'
 import useNews from './hooks/useNews'
 import Card from './components/Card.jsx'
 import ArticlePage from './Pages/ArticlePage.jsx'
+import ErrorDisplay from './components/ErrorDisplay.jsx'
 
 
 const summaryCache = new Map()
@@ -62,6 +63,15 @@ Content:
 "${selectedArticle.content || selectedArticle.description || ''}"
 `
 
+    const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    
+    if (!openaiApiKey) {
+      const fallback = selectedArticle.content || selectedArticle.description || 'Summary not available. Please add VITE_OPENAI_API_KEY to your .env file.';
+      setSummaryData({ summary: fallback, emoji: '😐' });
+      setSummarizing(false);
+      return;
+    }
+
     axios
       .post(
         'https://api.openai.com/v1/chat/completions',
@@ -73,22 +83,40 @@ Content:
         },
         {
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+            Authorization: `Bearer ${openaiApiKey}`,
           },
         }
       )
       .then((resp) => {
-        const data = JSON.parse(resp.data.choices[0].message.content.trim())
-        summaryCache.set(key, data)
-        setSummaryData(data)
+        try {
+          const data = JSON.parse(resp.data.choices[0].message.content.trim())
+          summaryCache.set(key, data)
+          setSummaryData(data)
+        } catch (parseError) {
+          console.error('Failed to parse OpenAI response:', parseError);
+          const fallback = selectedArticle.content || selectedArticle.description || 'Summary not available.';
+          setSummaryData({ summary: fallback, emoji: '😐' });
+        }
       })
       .catch((err) => {
-        if (err.response?.status === 429) {
-          const fallback = selectedArticle.content || selectedArticle.description || 'Summary not available.'
-          setSummaryData({ summary: fallback, emoji: '😐' })
-        } else {
-          setSummaryError(err.message || 'Failed to generate summary')
+        let errorMessage = 'Failed to generate summary';
+        
+        if (err.response?.status === 401) {
+          errorMessage = 'Invalid OpenAI API key. Please check your API key.';
+        } else if (err.response?.status === 429) {
+          const fallback = selectedArticle.content || selectedArticle.description || 'Summary not available.';
+          setSummaryData({ summary: fallback, emoji: '😐' });
+          return;
+        } else if (err.response?.status === 500) {
+          errorMessage = 'OpenAI server error. Please try again later.';
+        } else if (err.response?.data?.error?.message) {
+          errorMessage = err.response.data.error.message;
+        } else if (err.message) {
+          errorMessage = err.message;
         }
+        
+        setSummaryError(errorMessage);
+        console.error('OpenAI API Error:', err);
       })
       .finally(() => setSummarizing(false))
   }, [selectedArticle])
@@ -115,7 +143,12 @@ Content:
             ))}
           </div>
         ) : error ? (
-          <p className="text-center text-red-500 mt-4">{error}</p>
+          <div className="mt-8">
+            <ErrorDisplay 
+              error={error} 
+              onRetry={() => window.location.reload()} 
+            />
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
@@ -210,7 +243,12 @@ Content:
                 <p className="mt-4">Generating summary…</p>
               </div>
             ) : summaryError ? (
-              <p className="text-red-500 mb-4">{summaryError}</p>
+              <div className="mb-4">
+                <ErrorDisplay 
+                  error={summaryError} 
+                  onRetry={() => setSelectedArticle(selectedArticle)} 
+                />
+              </div>
             ) : (
               <p className="mb-4 whitespace-pre-line leading-relaxed">{summaryData?.summary}</p>
             )}

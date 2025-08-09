@@ -28,9 +28,15 @@ const useNews = (topics, page = 1) => {
       setError(null);
 
       try {
-        const apiKey   = import.meta.env.VITE_NEWSAPI_KEY;
+        const apiKey = import.meta.env.VITE_NEWSAPI_KEY;
+        
+        // Check if API key is available
+        if (!apiKey) {
+          throw new Error('News API key is missing. Please add VITE_NEWSAPI_KEY to your .env file.');
+        }
+
         const key      = topics[0];
-        const query    = TOPIC_MAP[key] || key;  // e.g. "technology" or "finance"
+        const query    = TOPIC_MAP[key] || key; 
         const pageSize = 9;
 
         const resp = await axios.get(
@@ -47,6 +53,11 @@ const useNews = (topics, page = 1) => {
           }
         );
 
+        // Check for API-specific errors
+        if (resp.data.status === 'error') {
+          throw new Error(resp.data.message || 'News API returned an error');
+        }
+
         const articles = resp.data.articles || [];
         setHasMore(articles.length === pageSize);
 
@@ -58,7 +69,24 @@ const useNews = (topics, page = 1) => {
           );
         });
       } catch (err) {
-        setError(err.response?.data?.message || err.message);
+        let errorMessage = 'Failed to fetch news';
+        
+        if (err.response?.status === 401) {
+          errorMessage = 'Invalid API key. Please check your News API key.';
+        } else if (err.response?.status === 429) {
+          errorMessage = 'API rate limit exceeded. Please try again later.';
+        } else if (err.response?.status === 500) {
+          errorMessage = 'News API server error. Please try again later.';
+        } else if (err.message.includes('API key is missing')) {
+          errorMessage = err.message;
+        } else if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        setError(errorMessage);
+        console.error('News API Error:', err);
       } finally {
         setLoading(false);
       }
