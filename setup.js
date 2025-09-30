@@ -48,3 +48,4 @@ console.log('2. Get your OpenAI API key from: https://platform.openai.com/');
 console.log('3. Replace the placeholder values in the .env file with your actual API keys');
 console.log('4. Run "npm run dev" to start the application');
 console.log('\n⚠️  Remember: Never commit your .env file to version control!');
+

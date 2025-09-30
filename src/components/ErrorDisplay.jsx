@@ -67,3 +67,4 @@ const ErrorDisplay = ({ error, onRetry }) => {
 };
 
 export default ErrorDisplay;
+
