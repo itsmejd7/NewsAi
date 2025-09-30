@@ -83,7 +83,8 @@ A React-based news application that fetches news articles and provides AI-powere
 2. This project includes `vercel.json` for a Vite SPA with proper rewrites.
 
 3. Set environment variables in Vercel (Project Settings → Environment Variables):
-   - `VITE_NEWSAPI_KEY`
+   - `NEWSAPI_KEY` (server-side for `/api/news` proxy)
+   - `VITE_NEWSAPI_KEY` (optional, not used in production)
    - `VITE_OPENAI_API_KEY`
    - (optional) `VITE_HUGGINGFACE_API_KEY` if you use Hugging Face on `ArticlePage`.
 

@@ -28,30 +28,19 @@ const useNews = (topics, page = 1) => {
       setError(null);
 
       try {
-        const apiKey = import.meta.env.VITE_NEWSAPI_KEY;
-        
-        // Check if API key is available
-        if (!apiKey) {
-          throw new Error('News API key is missing. Please add VITE_NEWSAPI_KEY to your .env file.');
-        }
+        // When deployed, requests go through our serverless proxy to avoid browser restrictions.
 
         const key      = topics[0];
         const query    = TOPIC_MAP[key] || key; 
         const pageSize = 9;
 
-        const resp = await axios.get(
-          'https://newsapi.org/v2/everything',
-          {
-            params: {
-              apiKey,
-              q: query,
-              page,
-              pageSize,
-              language: 'en',
-              sortBy: 'publishedAt',
-            },
-          }
-        );
+        const resp = await axios.get('/api/news', {
+          params: {
+            topic: query,
+            page,
+            pageSize,
+          },
+        });
 
         // Check for API-specific errors
         if (resp.data.status === 'error') {
