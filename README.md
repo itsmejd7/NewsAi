@@ -72,3 +72,27 @@ A React-based news application that fetches news articles and provides AI-powere
 - **API Error**: Make sure your API keys are correctly set in the `.env` file
 - **No News**: Check if your News API key is valid and has remaining requests
 - **Summary Failed**: Verify your OpenAI API key and check your account balance
+
+## Deploying to Vercel
+
+1. Ensure you have a Vercel account and the Vercel CLI installed.
+   ```bash
+   npm i -g vercel
+   ```
+
+2. This project includes `vercel.json` for a Vite SPA with proper rewrites.
+
+3. Set environment variables in Vercel (Project Settings → Environment Variables):
+   - `VITE_NEWSAPI_KEY`
+   - `VITE_OPENAI_API_KEY`
+   - (optional) `VITE_HUGGINGFACE_API_KEY` if you use Hugging Face on `ArticlePage`.
+
+4. Deploy
+   ```bash
+   vercel
+   vercel --prod
+   ```
+
+Vercel will run `npm run build` and serve the `dist` output. Client-side routing is handled by a SPA rewrite to `index.html`.
+
+
