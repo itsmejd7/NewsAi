@@ -10,6 +10,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
+    "vercel-build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "setup": "node setup.js"
