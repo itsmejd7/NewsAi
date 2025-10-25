@@ -1,5 +1,15 @@
 export default async function handler(request, response) {
   try {
+    // Add CORS headers first
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Handle OPTIONS request
+    if (request.method === 'OPTIONS') {
+      return response.status(200).end();
+    }
+    
     const url = new URL(request.url, `http://${request.headers.host}`);
     const topic = url.searchParams.get('topic') || 'general';
     const page = parseInt(url.searchParams.get('page') || '1', 10);
@@ -23,10 +33,6 @@ export default async function handler(request, response) {
 
     const upstream = await fetch(newsApiUrl, { method: 'GET' });
     const data = await upstream.json();
-
-    response.setHeader('Access-Control-Allow-Origin', '*');
-    response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (upstream.ok) {
       return response.status(200).json(data);
