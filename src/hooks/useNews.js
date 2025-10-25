@@ -34,13 +34,38 @@ const useNews = (topics, page = 1) => {
         const query    = TOPIC_MAP[key] || key; 
         const pageSize = 9;
 
-        const resp = await axios.get('/api/news', {
-          params: {
-            topic: query,
-            page,
-            pageSize,
-          },
-        });
+        // Use direct News API in development, proxy in production
+        const isDevelopment = import.meta.env.DEV;
+        
+        let resp;
+        if (isDevelopment) {
+          // Direct API call in development
+          const apiKey = import.meta.env.VITE_NEWSAPI_KEY;
+          if (!apiKey) {
+            throw new Error('API key is missing. Please check your VITE_NEWSAPI_KEY in .env file.');
+          }
+          
+          const params = new URLSearchParams({
+            apiKey,
+            q: query,
+            page: String(page),
+            pageSize: String(pageSize),
+            language: 'en',
+            sortBy: 'publishedAt',
+          });
+          
+          const newsApiUrl = `https://newsapi.org/v2/everything?${params.toString()}`;
+          resp = await axios.get(newsApiUrl);
+        } else {
+          // Use proxy in production
+          resp = await axios.get('/api/news', {
+            params: {
+              topic: query,
+              page,
+              pageSize,
+            },
+          });
+        }
 
         // Check for API-specific errors
         if (resp.data.status === 'error') {
